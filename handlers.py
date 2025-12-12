@@ -89,13 +89,13 @@ async def handle_group_message(message: Message):
         # Generate comment using LLM
         comment = await llm_client.generate_comment(role, user_message)
 
-        # Reply to the message
-        await message.reply(comment)
+        # Send comment as regular message (not reply)
+        await message.answer(comment)
         logger.info(f"Commented in chat {chat_id}")
 
     except Exception as e:
         logger.error(f"Error generating comment: {e}", exc_info=True)
-        await message.reply("Извини, произошла ошибка при генерации комментария.")
+        await message.answer("Извини, произошла ошибка при генерации комментария.")
 
 
 @router.message(F.text)
