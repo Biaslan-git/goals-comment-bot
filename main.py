@@ -33,6 +33,17 @@ async def main():
     # Register router with handlers
     dp.include_router(router)
 
+    # Set bot commands for better UX
+    from aiogram.types import BotCommand, BotCommandScopeDefault
+    commands = [
+        BotCommand(command="start", description="Информация о боте"),
+        BotCommand(command="setrole", description="Установить роль бота"),
+        BotCommand(command="getrole", description="Посмотреть текущую роль"),
+        BotCommand(command="deleterole", description="Удалить роль"),
+    ]
+    await bot.set_my_commands(commands, scope=BotCommandScopeDefault())
+    logger.info("Bot commands set successfully")
+
     # Start polling
     try:
         logger.info("Bot started successfully!")
