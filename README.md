@@ -74,3 +74,46 @@ uv run main.py
 - Groq API - 15A?;0B=>5 LLM API (Llama 3.3 70B)
 - Pydantic - 20;840F8O :>=D83C@0F88
 - aiohttp - 0A8=E@>==K5 HTTP 70?@>AK
+
+## Deployment / Деплой
+
+### Deploy with Dokploy
+
+1. Create a new project in Dokploy
+2. Connect your Git repository
+3. Add environment variables in Dokploy settings:
+   - `TELEGRAM_BOT_TOKEN`
+   - `GROQ_API_KEY`
+   - `ADMIN_USER_ID` (optional)
+   - `PROXY_URL` (optional)
+4. Dokploy will automatically detect `Dockerfile` and deploy
+
+### Deploy with Docker Compose
+
+```bash
+# Create .env file
+cp .env.example .env
+# Edit .env with your values
+
+# Start container
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop
+docker-compose down
+```
+
+### Local Docker Build
+
+```bash
+# Build image
+docker build -t goals-comment-bot .
+
+# Run with .env file
+docker run -d --env-file .env --name bot goals-comment-bot
+
+# View logs
+docker logs -f bot
+```

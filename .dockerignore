@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment files
+.env
+
+# Bot data
+roles.json
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Documentation
+README.md
+CLAUDE.md
+
+# Other
+.dockerignore
+delete_webhook.py
