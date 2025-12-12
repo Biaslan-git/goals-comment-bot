@@ -13,7 +13,12 @@ class RoleStorage:
 
     def _load(self) -> Dict[int, str]:
         """Load roles from JSON file"""
-        if os.path.exists(self.filename):
+        # Handle case where file is a directory (Docker volume issue)
+        if os.path.isdir(self.filename):
+            import shutil
+            shutil.rmtree(self.filename)
+
+        if os.path.exists(self.filename) and os.path.isfile(self.filename):
             try:
                 with open(self.filename, "r", encoding="utf-8") as f:
                     data = json.load(f)
