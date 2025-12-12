@@ -13,4 +13,5 @@ wheels/
 .env
 
 # Bot data
-roles.json
+roles*.json
+data/

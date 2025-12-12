@@ -5,14 +5,15 @@ services:
     env_file:
       - .env
     volumes:
-      # Persist roles data - use named volume instead of bind mount
-      - bot-data:/app
+      # Persist data directory - all bots share this but use unique filenames
+      - bot-data:/data
     environment:
       # These will be overridden by .env file
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - GROQ_API_KEY=${GROQ_API_KEY}
       - ADMIN_USER_ID=${ADMIN_USER_ID:-}
       - PROXY_URL=${PROXY_URL:-}
+      - DATA_DIR=/data
 
 volumes:
   bot-data:

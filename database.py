@@ -1,14 +1,20 @@
 """Simple JSON-based storage for bot roles"""
 import json
 import os
+import hashlib
 from typing import Dict
 
 
 class RoleStorage:
     """Manages bot roles for different chats"""
 
-    def __init__(self, filename: str = "roles.json"):
-        self.filename = filename
+    def __init__(self, bot_token: str, data_dir: str = "/data"):
+        # Create data directory if it doesn't exist
+        os.makedirs(data_dir, exist_ok=True)
+
+        # Use hash of bot token for unique filename
+        token_hash = hashlib.md5(bot_token.encode()).hexdigest()[:8]
+        self.filename = os.path.join(data_dir, f"roles_{token_hash}.json")
         self.roles: Dict[int, str] = self._load()
 
     def _load(self) -> Dict[int, str]:
@@ -53,5 +59,4 @@ class RoleStorage:
         return False
 
 
-# Global storage instance
-role_storage = RoleStorage()
+# Global storage instance will be initialized in handlers.py after config is loaded

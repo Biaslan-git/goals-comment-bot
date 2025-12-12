@@ -5,14 +5,15 @@ from aiogram.types import Message
 from aiogram.enums import ChatType
 import logging
 
-from database import role_storage
+from database import RoleStorage
 from llm_client import GroqClient
 from config import config
 
 logger = logging.getLogger(__name__)
 router = Router()
 
-# Initialize LLM client
+# Initialize storage and LLM client
+role_storage = RoleStorage(bot_token=config.telegram_bot_token, data_dir=config.data_dir)
 llm_client = GroqClient(api_key=config.groq_api_key, proxy=config.proxy_url)
 
 

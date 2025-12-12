@@ -8,6 +8,7 @@ class Config(BaseSettings):
     groq_api_key: str
     admin_user_id: int | None = None
     proxy_url: str | None = None
+    data_dir: str = "/data"  # Directory for persistent data
 
     model_config = SettingsConfigDict(
         env_file=".env",
