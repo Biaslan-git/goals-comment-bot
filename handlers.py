@@ -17,6 +17,15 @@ role_storage = RoleStorage(bot_token=config.telegram_bot_token, data_dir=config.
 llm_client = GroqClient(api_key=config.groq_api_key, proxy=config.proxy_url)
 
 
+def is_admin(user_id: int) -> bool:
+    """Check if user is admin"""
+    admin_ids = config.admin_ids_list
+    # If no admins configured, allow everyone
+    if not admin_ids:
+        return True
+    return user_id in admin_ids
+
+
 @router.message(Command("start"))
 async def cmd_start(message: Message):
     """Handle /start command"""
@@ -32,7 +41,13 @@ async def cmd_start(message: Message):
 
 @router.message(Command("setrole"))
 async def cmd_set_role(message: Message, command: CommandObject):
-    """Set bot role (works in private chat only)"""
+    """Set bot role (admin only)"""
+    # Check admin access
+    if not is_admin(message.from_user.id):
+        await message.answer("У вас нет прав для выполнения этой команды.")
+        logger.warning(f"Unauthorized setrole attempt from user {message.from_user.id}")
+        return
+
     if not command.args:
         await message.answer(
             "Использование: /setrole &lt;текст роли&gt;\n\n"
@@ -45,7 +60,7 @@ async def cmd_set_role(message: Message, command: CommandObject):
     role_storage.set_role(role)
 
     await message.answer(f"Роль установлена для всех чатов!\n\n{role}")
-    logger.info(f"Role set: {role[:50]}...")
+    logger.info(f"Role set by user {message.from_user.id}: {role[:50]}...")
 
 
 @router.message(Command("getrole"))
@@ -57,9 +72,16 @@ async def cmd_get_role(message: Message):
 
 @router.message(Command("deleterole"))
 async def cmd_delete_role(message: Message):
-    """Reset to default role"""
+    """Reset to default role (admin only)"""
+    # Check admin access
+    if not is_admin(message.from_user.id):
+        await message.answer("У вас нет прав для выполнения этой команды.")
+        logger.warning(f"Unauthorized deleterole attempt from user {message.from_user.id}")
+        return
+
     role_storage.delete_role()
     await message.answer("Роль сброшена на стандартную.")
+    logger.info(f"Role deleted by user {message.from_user.id}")
 
 
 @router.message(
