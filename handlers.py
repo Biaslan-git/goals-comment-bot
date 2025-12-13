@@ -32,7 +32,7 @@ async def cmd_start(message: Message):
 
 @router.message(Command("setrole"))
 async def cmd_set_role(message: Message, command: CommandObject):
-    """Set bot role for current chat"""
+    """Set bot role (works in private chat only)"""
     if not command.args:
         await message.answer(
             "Использование: /setrole &lt;текст роли&gt;\n\n"
@@ -41,30 +41,25 @@ async def cmd_set_role(message: Message, command: CommandObject):
         )
         return
 
-    chat_id = message.chat.id
     role = command.args
-    role_storage.set_role(chat_id, role)
+    role_storage.set_role(role)
 
-    await message.answer(f"Роль установлена!\n\n{role}")
-    logger.info(f"Role set for chat {chat_id}: {role[:50]}...")
+    await message.answer(f"Роль установлена для всех чатов!\n\n{role}")
+    logger.info(f"Role set: {role[:50]}...")
 
 
 @router.message(Command("getrole"))
 async def cmd_get_role(message: Message):
-    """Get current bot role for this chat"""
-    chat_id = message.chat.id
-    role = role_storage.get_role(chat_id)
+    """Get current bot role"""
+    role = role_storage.get_role()
     await message.answer(f"Текущая роль:\n\n{role}")
 
 
 @router.message(Command("deleterole"))
 async def cmd_delete_role(message: Message):
-    """Delete custom role for this chat"""
-    chat_id = message.chat.id
-    if role_storage.delete_role(chat_id):
-        await message.answer("Роль удалена. Использую стандартную роль.")
-    else:
-        await message.answer("Роль не была установлена.")
+    """Reset to default role"""
+    role_storage.delete_role()
+    await message.answer("Роль сброшена на стандартную.")
 
 
 @router.message(
@@ -82,7 +77,7 @@ async def handle_group_message(message: Message):
         return
 
     chat_id = message.chat.id
-    role = role_storage.get_role(chat_id)
+    role = role_storage.get_role()
     user_message = message.text
 
     try:
@@ -98,7 +93,10 @@ async def handle_group_message(message: Message):
         await message.answer("Извини, произошла ошибка при генерации комментария.")
 
 
-@router.message(F.text)
+@router.message(
+    F.chat.type == ChatType.PRIVATE,
+    F.text
+)
 async def handle_private_message(message: Message):
     """Handle messages in private chat"""
     if message.text and message.text.startswith("/"):
