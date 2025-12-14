@@ -36,5 +36,5 @@ ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
-# Run the bot directly via Python (not uv)
-CMD ["python", "main.py"]
+# Run the multi-bot manager directly via Python (not uv)
+CMD ["python", "main_multi.py"]

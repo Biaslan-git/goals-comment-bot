@@ -16,6 +16,7 @@ env/
 
 # Bot data
 roles.json
+role_*.json
 
 # Git
 .git/
