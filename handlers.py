@@ -103,12 +103,27 @@ async def handle_group_message(message: Message):
     user_message = message.text
 
     try:
+        # Delete previous bot comment if it exists
+        last_message_id = role_storage.get_last_message_id(chat_id)
+        if last_message_id:
+            try:
+                await message.bot.delete_message(chat_id=chat_id, message_id=last_message_id)
+                logger.info(f"Deleted previous comment (message_id={last_message_id}) in chat {chat_id}")
+            except Exception as e:
+                logger.warning(f"Could not delete previous message {last_message_id} in chat {chat_id}: {e}")
+                # Clear the stored message_id if deletion failed (message might have been deleted manually)
+                role_storage.clear_last_message_id(chat_id)
+
         # Generate comment using LLM
         comment = await llm_client.generate_comment(role, user_message)
 
         # Send comment as regular message (not reply)
-        await message.answer(comment)
-        logger.info(f"Commented in chat {chat_id}")
+        sent_message = await message.answer(comment)
+
+        # Store the message ID of the new comment
+        role_storage.set_last_message_id(chat_id, sent_message.message_id)
+
+        logger.info(f"Commented in chat {chat_id} (message_id={sent_message.message_id})")
 
     except Exception as e:
         logger.error(f"Error generating comment: {e}", exc_info=True)

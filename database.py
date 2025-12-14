@@ -5,7 +5,7 @@ import hashlib
 
 
 class RoleStorage:
-    """Manages bot role (single global role for all chats)"""
+    """Manages bot role (single global role for all chats) and last message IDs"""
 
     DEFAULT_ROLE = "Ты дружелюбный помощник, который комментирует сообщения в групповом чате."
 
@@ -16,10 +16,12 @@ class RoleStorage:
         # Use hash of bot token for unique filename
         token_hash = hashlib.md5(bot_token.encode()).hexdigest()[:8]
         self.filename = os.path.join(data_dir, f"role_{token_hash}.json")
-        self.role: str = self._load()
+        self.role: str = self.DEFAULT_ROLE
+        self.last_message_ids: dict[int, int] = {}  # chat_id -> message_id
+        self._load()
 
-    def _load(self) -> str:
-        """Load role from JSON file"""
+    def _load(self) -> None:
+        """Load role and last message IDs from JSON file (backward compatible)"""
         # Handle case where file is a directory (Docker volume issue)
         if os.path.isdir(self.filename):
             import shutil
@@ -29,15 +31,24 @@ class RoleStorage:
             try:
                 with open(self.filename, "r", encoding="utf-8") as f:
                     data = json.load(f)
-                    return data.get("role", self.DEFAULT_ROLE)
+
+                    # Load role (backward compatible)
+                    self.role = data.get("role", self.DEFAULT_ROLE)
+
+                    # Load last_message_ids with integer keys (new field, backward compatible)
+                    last_msg_ids = data.get("last_message_ids", {})
+                    self.last_message_ids = {int(k): v for k, v in last_msg_ids.items()} if last_msg_ids else {}
             except (json.JSONDecodeError, ValueError):
-                return self.DEFAULT_ROLE
-        return self.DEFAULT_ROLE
+                self.role = self.DEFAULT_ROLE
+                self.last_message_ids = {}
 
     def _save(self) -> None:
-        """Save role to JSON file"""
+        """Save role and last message IDs to JSON file"""
         with open(self.filename, "w", encoding="utf-8") as f:
-            json.dump({"role": self.role}, f, ensure_ascii=False, indent=2)
+            json.dump({
+                "role": self.role,
+                "last_message_ids": self.last_message_ids
+            }, f, ensure_ascii=False, indent=2)
 
     def get_role(self) -> str:
         """Get current role"""
@@ -52,6 +63,21 @@ class RoleStorage:
         """Reset to default role"""
         self.role = self.DEFAULT_ROLE
         self._save()
+
+    def get_last_message_id(self, chat_id: int) -> int | None:
+        """Get last message ID for a chat"""
+        return self.last_message_ids.get(chat_id)
+
+    def set_last_message_id(self, chat_id: int, message_id: int) -> None:
+        """Set last message ID for a chat"""
+        self.last_message_ids[chat_id] = message_id
+        self._save()
+
+    def clear_last_message_id(self, chat_id: int) -> None:
+        """Clear last message ID for a chat"""
+        if chat_id in self.last_message_ids:
+            del self.last_message_ids[chat_id]
+            self._save()
 
 
 # Global storage instance will be initialized in handlers.py after config is loaded
