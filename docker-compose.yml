@@ -1,6 +1,8 @@
 services:
   bot:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     restart: unless-stopped
     env_file:
       - .env
@@ -14,6 +16,38 @@ services:
       - ADMIN_USER_ID=${ADMIN_USER_ID:-}
       - PROXY_URL=${PROXY_URL:-}
       - DATA_DIR=/data
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'           # Максимум 50% одного CPU
+          memory: 256M          # Максимум 256MB RAM
+        reservations:
+          cpus: '0.1'           # Минимум 10% CPU
+          memory: 64M           # Минимум 64MB RAM
+
+    # Health check
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'python main.py' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+    read_only: false            # Должно быть false для записи в /data
+    tmpfs:
+      - /tmp:size=10M,mode=1777
+
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   bot-data:
