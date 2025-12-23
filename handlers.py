@@ -117,8 +117,8 @@ async def handle_group_message(message: Message):
         # Generate comment using LLM
         comment = await llm_client.generate_comment(role, user_message)
 
-        # Send comment as regular message (not reply)
-        sent_message = await message.answer(comment)
+        # Send comment as reply to the user's message
+        sent_message = await message.reply(comment)
 
         # Store the message ID of the new comment
         role_storage.set_last_message_id(chat_id, sent_message.message_id)
