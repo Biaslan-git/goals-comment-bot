@@ -98,13 +98,20 @@ async def handle_group_message(message: Message):
     if message.text and message.text.startswith("/"):
         return
 
-    # Skip if message is from a bot
-    if message.from_user and message.from_user.is_bot:
+    # Skip if message is from a bot user (not channel)
+    # Allow messages from channels (sender_chat is set but from_user might be None or a bot)
+    if message.from_user and message.from_user.is_bot and not message.sender_chat:
         return
 
     chat_id = message.chat.id
     role = role_storage.get_role()
     user_message = message.text
+
+    # Log message source for debugging
+    if message.sender_chat:
+        logger.info(f"Processing message from channel/chat: {message.sender_chat.title} (id={message.sender_chat.id})")
+    elif message.from_user:
+        logger.info(f"Processing message from user: {message.from_user.username or message.from_user.id}")
 
     try:
         # Delete previous bot comment if it exists
