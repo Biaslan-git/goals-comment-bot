@@ -103,6 +103,12 @@ async def handle_group_message(message: Message):
     if message.from_user and message.from_user.is_bot and not message.sender_chat:
         return
 
+    # If channel_id is configured, only respond to messages from that specific channel
+    if config.channel_id is not None:
+        if not message.sender_chat or message.sender_chat.id != config.channel_id:
+            logger.debug(f"Ignoring message: not from configured channel {config.channel_id}")
+            return
+
     chat_id = message.chat.id
     role = role_storage.get_role()
     user_message = message.text

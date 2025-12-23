@@ -12,6 +12,7 @@ class Config(BaseSettings):
     data_dir: str = "/data"  # Directory for persistent data
     chat_history_limit: int = 20  # Max number of messages to keep in chat history
     delete_previous_messages: bool = True  # Delete previous bot messages before sending new ones
+    channel_id: int | None = None  # Only reply to messages from this channel ID (optional)
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -113,6 +113,15 @@ class BotHandlers:
             if message.from_user and message.from_user.is_bot and not message.sender_chat:
                 return
 
+            # If channel_id is configured, only respond to messages from that specific channel
+            if self.bot_config.channel_id is not None:
+                if not message.sender_chat or message.sender_chat.id != self.bot_config.channel_id:
+                    logger.debug(
+                        f"[{self.bot_config.name}] Ignoring message: not from configured "
+                        f"channel {self.bot_config.channel_id}"
+                    )
+                    return
+
             chat_id = message.chat.id
             role = self.role_storage.get_role()
             user_message = message.text

@@ -12,6 +12,7 @@ class BotConfig(BaseModel):
     enable_history: bool = Field(False, description="Enable chat history storage")
     use_reply: bool = Field(False, description="Use reply instead of answer")
     delete_previous: bool = Field(True, description="Delete previous bot messages before sending new ones")
+    channel_id: int | None = Field(None, description="Only reply to messages from this channel ID (optional)")
 
     @property
     def admin_ids_list(self) -> list[int]:
@@ -49,6 +50,9 @@ class MultiBotConfig(BaseSettings):
 
     # Optional: Delete previous messages for specific bots (comma-separated true/false, matches bot order)
     bot_delete_previous: str = Field("", description="Comma-separated true/false for each bot")
+
+    # Optional: Channel IDs for specific bots (comma-separated channel IDs, matches bot order)
+    bot_channel_ids: str = Field("", description="Comma-separated channel IDs for each bot (empty = all messages)")
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -113,6 +117,22 @@ class MultiBotConfig(BaseSettings):
         if len(delete_previous_list) != len(tokens):
             delete_previous_list = [True] * len(tokens)
 
+        # Parse channel_ids settings (optional)
+        channel_ids_list = []
+        if self.bot_channel_ids:
+            for s in self.bot_channel_ids.split(","):
+                s = s.strip()
+                if s and s.lower() != "none":
+                    try:
+                        channel_ids_list.append(int(s))
+                    except ValueError:
+                        channel_ids_list.append(None)
+                else:
+                    channel_ids_list.append(None)
+        # If not provided or count mismatch, use default (None)
+        if len(channel_ids_list) != len(tokens):
+            channel_ids_list = [None] * len(tokens)
+
         # Create BotConfig for each token
         bots = []
         for i, token in enumerate(tokens):
@@ -122,7 +142,8 @@ class MultiBotConfig(BaseSettings):
                 admin_user_ids=self.admin_user_ids,
                 enable_history=enable_history_list[i],
                 use_reply=use_reply_list[i],
-                delete_previous=delete_previous_list[i]
+                delete_previous=delete_previous_list[i],
+                channel_id=channel_ids_list[i]
             ))
 
         return bots

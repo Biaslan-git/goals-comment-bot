@@ -102,6 +102,17 @@ Controls whether the bot deletes its previous message before sending a new one.
   - Bot 1 & 3: Will delete previous bot messages
   - Bot 2 & 4: Will keep all messages (history accumulates)
 
+#### Channel Filter (`BOT_CHANNEL_IDS`)
+Controls which channel the bot responds to (useful for discussion groups attached to channels).
+- Default: `none` (responds to all messages)
+- When set, bot will ONLY respond to messages from the specified channel
+- Example for 4 bots: `BOT_CHANNEL_IDS=-1001234567890,none,-1009876543210,none`
+  - Bot 1: Only responds to channel -1001234567890
+  - Bot 2: Responds to all messages
+  - Bot 3: Only responds to channel -1009876543210
+  - Bot 4: Responds to all messages
+- **How to get channel ID**: Forward a message from the channel to [@userinfobot](https://t.me/userinfobot)
+
 #### Example .env for 3 bots:
 ```env
 BOT_TOKENS=TOKEN1,TOKEN2,TOKEN3
@@ -109,13 +120,14 @@ BOT_NAMES=Motivator,Psychologist,Coach
 BOT_ENABLE_HISTORY=true,true,false
 BOT_USE_REPLY=true,false,true
 BOT_DELETE_PREVIOUS=true,false,true
+BOT_CHANNEL_IDS=-1001234567890,none,none
 CHAT_HISTORY_LIMIT=20
 ```
 
 This configuration means:
-- **Motivator**: History enabled, uses reply, deletes previous messages
-- **Psychologist**: History enabled, uses answer, keeps all messages
-- **Coach**: No history, uses reply, deletes previous messages
+- **Motivator**: History enabled, uses reply, deletes previous messages, only responds to channel -1001234567890
+- **Psychologist**: History enabled, uses answer, keeps all messages, responds to all messages
+- **Coach**: No history, uses reply, deletes previous messages, responds to all messages
 
 ## Deployment / Деплой
 
@@ -130,6 +142,7 @@ This configuration means:
    - `BOT_ENABLE_HISTORY` (optional, comma-separated true/false)
    - `BOT_USE_REPLY` (optional, comma-separated true/false)
    - `BOT_DELETE_PREVIOUS` (optional, comma-separated true/false, default: true)
+   - `BOT_CHANNEL_IDS` (optional, comma-separated channel IDs or "none", default: none)
    - `ADMIN_USER_IDS` (optional)
    - `PROXY_URL` (optional)
    - `CHAT_HISTORY_LIMIT` (optional, default: 20)
