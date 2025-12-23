@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class BotHandlers:
     """Handler factory for individual bot instances"""
 
-    def __init__(self, bot_config: BotConfig, groq_client: GroqClient, data_dir: str):
+    def __init__(self, bot_config: BotConfig, groq_client: GroqClient, data_dir: str, history_limit: int = 20):
         self.bot_config = bot_config
         self.groq_client = groq_client
         self.router = Router()
@@ -23,7 +23,8 @@ class BotHandlers:
         # Each bot has its own storage
         self.role_storage = RoleStorage(
             bot_token=bot_config.token,
-            data_dir=data_dir
+            data_dir=data_dir,
+            history_limit=history_limit
         )
 
         # Register handlers
@@ -133,11 +134,18 @@ class BotHandlers:
                         # Clear the stored message_id if deletion failed
                         self.role_storage.clear_last_message_id(chat_id)
 
-                # Generate comment using LLM
-                comment = await self.groq_client.generate_comment(role, user_message)
+                # Get chat history for context
+                chat_history = self.role_storage.get_chat_history(chat_id)
+
+                # Generate comment using LLM with chat history
+                comment = await self.groq_client.generate_comment(role, user_message, chat_history)
 
                 # Send comment as reply to the user's message
                 sent_message = await message.reply(comment)
+
+                # Add user message and bot response to chat history
+                self.role_storage.add_message_to_history(chat_id, "user", user_message)
+                self.role_storage.add_message_to_history(chat_id, "assistant", comment)
 
                 # Store the message ID of the new comment
                 self.role_storage.set_last_message_id(chat_id, sent_message.message_id)

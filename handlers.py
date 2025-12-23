@@ -13,7 +13,11 @@ logger = logging.getLogger(__name__)
 router = Router()
 
 # Initialize storage and LLM client
-role_storage = RoleStorage(bot_token=config.telegram_bot_token, data_dir=config.data_dir)
+role_storage = RoleStorage(
+    bot_token=config.telegram_bot_token,
+    data_dir=config.data_dir,
+    history_limit=config.chat_history_limit
+)
 llm_client = GroqClient(api_key=config.groq_api_key, proxy=config.proxy_url)
 
 
@@ -114,11 +118,18 @@ async def handle_group_message(message: Message):
                 # Clear the stored message_id if deletion failed (message might have been deleted manually)
                 role_storage.clear_last_message_id(chat_id)
 
-        # Generate comment using LLM
-        comment = await llm_client.generate_comment(role, user_message)
+        # Get chat history for context
+        chat_history = role_storage.get_chat_history(chat_id)
+
+        # Generate comment using LLM with chat history
+        comment = await llm_client.generate_comment(role, user_message, chat_history)
 
         # Send comment as reply to the user's message
         sent_message = await message.reply(comment)
+
+        # Add user message and bot response to chat history
+        role_storage.add_message_to_history(chat_id, "user", user_message)
+        role_storage.add_message_to_history(chat_id, "assistant", comment)
 
         # Store the message ID of the new comment
         role_storage.set_last_message_id(chat_id, sent_message.message_id)

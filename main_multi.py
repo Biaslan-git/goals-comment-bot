@@ -33,7 +33,7 @@ async def setup_bot_commands(bot: Bot, bot_name: str):
     logger.info(f"[{bot_name}] Commands set successfully")
 
 
-async def run_bot(bot_config: BotConfig, groq_client: GroqClient, data_dir: str):
+async def run_bot(bot_config: BotConfig, groq_client: GroqClient, data_dir: str, history_limit: int):
     """Run a single bot instance"""
     logger.info(f"[{bot_config.name}] Starting bot...")
 
@@ -45,7 +45,7 @@ async def run_bot(bot_config: BotConfig, groq_client: GroqClient, data_dir: str)
     dp = Dispatcher()
 
     # Create handlers for this bot
-    bot_handlers = BotHandlers(bot_config, groq_client, data_dir)
+    bot_handlers = BotHandlers(bot_config, groq_client, data_dir, history_limit)
 
     # Register router with handlers
     dp.include_router(bot_handlers.router)
@@ -93,7 +93,7 @@ async def main():
 
     # Create tasks for all bots
     tasks = [
-        run_bot(bot_config, groq_client, config.data_dir)
+        run_bot(bot_config, groq_client, config.data_dir, config.chat_history_limit)
         for bot_config in enabled_bots
     ]
 

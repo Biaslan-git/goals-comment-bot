@@ -10,6 +10,7 @@ class Config(BaseSettings):
     admin_user_ids: str = ""  # Comma-separated list of admin user IDs
     proxy_url: str | None = None
     data_dir: str = "/data"  # Directory for persistent data
+    chat_history_limit: int = 20  # Max number of messages to keep in chat history
 
     model_config = SettingsConfigDict(
         env_file=".env",

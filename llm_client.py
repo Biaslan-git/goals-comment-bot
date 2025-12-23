@@ -13,21 +13,26 @@ class GroqClient:
         self.model = model
         self.proxy = proxy
 
-    async def generate_comment(self, role: str, message: str) -> str:
+    async def generate_comment(self, role: str, message: str, chat_history: List[Dict[str, str]] = None) -> str:
         """
-        Generate a comment based on the role and message
+        Generate a comment based on the role, message, and chat history
 
         Args:
             role: System role/prompt for the bot
             message: User message to comment on
+            chat_history: Previous messages in the chat (list of {role, content} dicts)
 
         Returns:
             Generated comment text
         """
-        messages = [
-            {"role": "system", "content": role},
-            {"role": "user", "content": f"Прокомментируй это сообщение: {message}"}
-        ]
+        messages = [{"role": "system", "content": role}]
+
+        # Add chat history if provided
+        if chat_history:
+            messages.extend(chat_history)
+
+        # Add current user message
+        messages.append({"role": "user", "content": message})
 
         headers = {
             "Authorization": f"Bearer {self.api_key}",

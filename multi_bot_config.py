@@ -27,6 +27,7 @@ class MultiBotConfig(BaseSettings):
     groq_api_key: str = Field(..., description="Groq API key (shared by all bots)")
     proxy_url: str | None = Field(None, description="Proxy URL (shared by all bots)")
     data_dir: str = Field("/data", description="Directory for persistent data")
+    chat_history_limit: int = Field(20, description="Max number of messages to keep in chat history")
 
     # Bot tokens as comma-separated string
     bot_tokens: str = Field(..., description="Comma-separated bot tokens")
