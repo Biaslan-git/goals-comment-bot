@@ -95,19 +95,27 @@ Controls whether the bot uses reply (quotes the message) or just sends a regular
   - Bot 1 & 3: Regular messages (answer)
   - Bot 2 & 4: Reply with quote (reply)
 
+#### Delete Previous Messages (`BOT_DELETE_PREVIOUS`)
+Controls whether the bot deletes its previous message before sending a new one.
+- Default: `true` (deletes previous messages)
+- Example for 4 bots: `BOT_DELETE_PREVIOUS=true,false,true,false`
+  - Bot 1 & 3: Will delete previous bot messages
+  - Bot 2 & 4: Will keep all messages (history accumulates)
+
 #### Example .env for 3 bots:
 ```env
 BOT_TOKENS=TOKEN1,TOKEN2,TOKEN3
 BOT_NAMES=Motivator,Psychologist,Coach
 BOT_ENABLE_HISTORY=true,true,false
 BOT_USE_REPLY=true,false,true
+BOT_DELETE_PREVIOUS=true,false,true
 CHAT_HISTORY_LIMIT=20
 ```
 
 This configuration means:
-- **Motivator**: History enabled, uses reply
-- **Psychologist**: History enabled, uses answer
-- **Coach**: No history, uses reply
+- **Motivator**: History enabled, uses reply, deletes previous messages
+- **Psychologist**: History enabled, uses answer, keeps all messages
+- **Coach**: No history, uses reply, deletes previous messages
 
 ## Deployment / Деплой
 
@@ -121,6 +129,7 @@ This configuration means:
    - `BOT_NAMES` (optional, comma-separated)
    - `BOT_ENABLE_HISTORY` (optional, comma-separated true/false)
    - `BOT_USE_REPLY` (optional, comma-separated true/false)
+   - `BOT_DELETE_PREVIOUS` (optional, comma-separated true/false, default: true)
    - `ADMIN_USER_IDS` (optional)
    - `PROXY_URL` (optional)
    - `CHAT_HISTORY_LIMIT` (optional, default: 20)

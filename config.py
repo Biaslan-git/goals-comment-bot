@@ -11,6 +11,7 @@ class Config(BaseSettings):
     proxy_url: str | None = None
     data_dir: str = "/data"  # Directory for persistent data
     chat_history_limit: int = 20  # Max number of messages to keep in chat history
+    delete_previous_messages: bool = True  # Delete previous bot messages before sending new ones
 
     model_config = SettingsConfigDict(
         env_file=".env",

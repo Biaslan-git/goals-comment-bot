@@ -108,31 +108,45 @@ class BotHandlers:
             if message.text and message.text.startswith("/"):
                 return
 
-            # Skip if message is from a bot
-            if message.from_user and message.from_user.is_bot:
+            # Skip if message is from a bot user (not channel)
+            # Allow messages from channels (sender_chat is set but from_user might be None or a bot)
+            if message.from_user and message.from_user.is_bot and not message.sender_chat:
                 return
 
             chat_id = message.chat.id
             role = self.role_storage.get_role()
             user_message = message.text
 
+            # Log message source for debugging
+            if message.sender_chat:
+                logger.info(
+                    f"[{self.bot_config.name}] Processing message from channel/chat: "
+                    f"{message.sender_chat.title} (id={message.sender_chat.id})"
+                )
+            elif message.from_user:
+                logger.info(
+                    f"[{self.bot_config.name}] Processing message from user: "
+                    f"{message.from_user.username or message.from_user.id}"
+                )
+
             try:
-                # Delete previous bot comment if it exists
-                last_message_id = self.role_storage.get_last_message_id(chat_id)
-                if last_message_id:
-                    try:
-                        await message.bot.delete_message(chat_id=chat_id, message_id=last_message_id)
-                        logger.info(
-                            f"[{self.bot_config.name}] Deleted previous comment "
-                            f"(message_id={last_message_id}) in chat {chat_id}"
-                        )
-                    except Exception as e:
-                        logger.warning(
-                            f"[{self.bot_config.name}] Could not delete previous message "
-                            f"{last_message_id} in chat {chat_id}: {e}"
-                        )
-                        # Clear the stored message_id if deletion failed
-                        self.role_storage.clear_last_message_id(chat_id)
+                # Delete previous bot comment if it exists and deletion is enabled
+                if self.bot_config.delete_previous:
+                    last_message_id = self.role_storage.get_last_message_id(chat_id)
+                    if last_message_id:
+                        try:
+                            await message.bot.delete_message(chat_id=chat_id, message_id=last_message_id)
+                            logger.info(
+                                f"[{self.bot_config.name}] Deleted previous comment "
+                                f"(message_id={last_message_id}) in chat {chat_id}"
+                            )
+                        except Exception as e:
+                            logger.warning(
+                                f"[{self.bot_config.name}] Could not delete previous message "
+                                f"{last_message_id} in chat {chat_id}: {e}"
+                            )
+                            # Clear the stored message_id if deletion failed
+                            self.role_storage.clear_last_message_id(chat_id)
 
                 # Get chat history for context if enabled
                 chat_history = None

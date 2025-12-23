@@ -114,16 +114,17 @@ async def handle_group_message(message: Message):
         logger.info(f"Processing message from user: {message.from_user.username or message.from_user.id}")
 
     try:
-        # Delete previous bot comment if it exists
-        last_message_id = role_storage.get_last_message_id(chat_id)
-        if last_message_id:
-            try:
-                await message.bot.delete_message(chat_id=chat_id, message_id=last_message_id)
-                logger.info(f"Deleted previous comment (message_id={last_message_id}) in chat {chat_id}")
-            except Exception as e:
-                logger.warning(f"Could not delete previous message {last_message_id} in chat {chat_id}: {e}")
-                # Clear the stored message_id if deletion failed (message might have been deleted manually)
-                role_storage.clear_last_message_id(chat_id)
+        # Delete previous bot comment if it exists and deletion is enabled
+        if config.delete_previous_messages:
+            last_message_id = role_storage.get_last_message_id(chat_id)
+            if last_message_id:
+                try:
+                    await message.bot.delete_message(chat_id=chat_id, message_id=last_message_id)
+                    logger.info(f"Deleted previous comment (message_id={last_message_id}) in chat {chat_id}")
+                except Exception as e:
+                    logger.warning(f"Could not delete previous message {last_message_id} in chat {chat_id}: {e}")
+                    # Clear the stored message_id if deletion failed (message might have been deleted manually)
+                    role_storage.clear_last_message_id(chat_id)
 
         # Get chat history for context
         chat_history = role_storage.get_chat_history(chat_id)

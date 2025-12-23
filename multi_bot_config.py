@@ -11,6 +11,7 @@ class BotConfig(BaseModel):
     admin_user_ids: str = Field("", description="Comma-separated admin user IDs")
     enable_history: bool = Field(False, description="Enable chat history storage")
     use_reply: bool = Field(False, description="Use reply instead of answer")
+    delete_previous: bool = Field(True, description="Delete previous bot messages before sending new ones")
 
     @property
     def admin_ids_list(self) -> list[int]:
@@ -45,6 +46,9 @@ class MultiBotConfig(BaseSettings):
 
     # Optional: Use reply for specific bots (comma-separated true/false, matches bot order)
     bot_use_reply: str = Field("", description="Comma-separated true/false for each bot")
+
+    # Optional: Delete previous messages for specific bots (comma-separated true/false, matches bot order)
+    bot_delete_previous: str = Field("", description="Comma-separated true/false for each bot")
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -97,6 +101,18 @@ class MultiBotConfig(BaseSettings):
         if len(use_reply_list) != len(tokens):
             use_reply_list = [False] * len(tokens)
 
+        # Parse delete_previous settings (optional)
+        delete_previous_list = []
+        if self.bot_delete_previous:
+            delete_previous_list = [
+                s.strip().lower() == "true"
+                for s in self.bot_delete_previous.split(",")
+                if s.strip()
+            ]
+        # If not provided or count mismatch, use default (True)
+        if len(delete_previous_list) != len(tokens):
+            delete_previous_list = [True] * len(tokens)
+
         # Create BotConfig for each token
         bots = []
         for i, token in enumerate(tokens):
@@ -105,7 +121,8 @@ class MultiBotConfig(BaseSettings):
                 name=names[i],
                 admin_user_ids=self.admin_user_ids,
                 enable_history=enable_history_list[i],
-                use_reply=use_reply_list[i]
+                use_reply=use_reply_list[i],
+                delete_previous=delete_previous_list[i]
             ))
 
         return bots
