@@ -9,6 +9,8 @@ class BotConfig(BaseModel):
     token: str = Field(..., description="Telegram bot token")
     name: str = Field(..., description="Bot display name (for logs)")
     admin_user_ids: str = Field("", description="Comma-separated admin user IDs")
+    enable_history: bool = Field(False, description="Enable chat history storage")
+    use_reply: bool = Field(False, description="Use reply instead of answer")
 
     @property
     def admin_ids_list(self) -> list[int]:
@@ -38,6 +40,12 @@ class MultiBotConfig(BaseSettings):
     # Optional: Admin user IDs (same for all bots or empty)
     admin_user_ids: str = Field("", description="Comma-separated admin user IDs")
 
+    # Optional: Enable history for specific bots (comma-separated true/false, matches bot order)
+    bot_enable_history: str = Field("", description="Comma-separated true/false for each bot")
+
+    # Optional: Use reply for specific bots (comma-separated true/false, matches bot order)
+    bot_use_reply: str = Field("", description="Comma-separated true/false for each bot")
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -65,13 +73,39 @@ class MultiBotConfig(BaseSettings):
         if len(names) != len(tokens):
             names = [f"Bot{i+1}" for i in range(len(tokens))]
 
+        # Parse enable_history settings (optional)
+        enable_history_list = []
+        if self.bot_enable_history:
+            enable_history_list = [
+                s.strip().lower() == "true"
+                for s in self.bot_enable_history.split(",")
+                if s.strip()
+            ]
+        # If not provided or count mismatch, use default (False)
+        if len(enable_history_list) != len(tokens):
+            enable_history_list = [False] * len(tokens)
+
+        # Parse use_reply settings (optional)
+        use_reply_list = []
+        if self.bot_use_reply:
+            use_reply_list = [
+                s.strip().lower() == "true"
+                for s in self.bot_use_reply.split(",")
+                if s.strip()
+            ]
+        # If not provided or count mismatch, use default (False)
+        if len(use_reply_list) != len(tokens):
+            use_reply_list = [False] * len(tokens)
+
         # Create BotConfig for each token
         bots = []
         for i, token in enumerate(tokens):
             bots.append(BotConfig(
                 token=token,
                 name=names[i],
-                admin_user_ids=self.admin_user_ids
+                admin_user_ids=self.admin_user_ids,
+                enable_history=enable_history_list[i],
+                use_reply=use_reply_list[i]
             ))
 
         return bots

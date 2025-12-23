@@ -134,18 +134,24 @@ class BotHandlers:
                         # Clear the stored message_id if deletion failed
                         self.role_storage.clear_last_message_id(chat_id)
 
-                # Get chat history for context
-                chat_history = self.role_storage.get_chat_history(chat_id)
+                # Get chat history for context if enabled
+                chat_history = None
+                if self.bot_config.enable_history:
+                    chat_history = self.role_storage.get_chat_history(chat_id)
 
                 # Generate comment using LLM with chat history
                 comment = await self.groq_client.generate_comment(role, user_message, chat_history)
 
-                # Send comment as reply to the user's message
-                sent_message = await message.reply(comment)
+                # Send comment as reply or answer based on config
+                if self.bot_config.use_reply:
+                    sent_message = await message.reply(comment)
+                else:
+                    sent_message = await message.answer(comment)
 
-                # Add user message and bot response to chat history
-                self.role_storage.add_message_to_history(chat_id, "user", user_message)
-                self.role_storage.add_message_to_history(chat_id, "assistant", comment)
+                # Add user message and bot response to chat history if enabled
+                if self.bot_config.enable_history:
+                    self.role_storage.add_message_to_history(chat_id, "user", user_message)
+                    self.role_storage.add_message_to_history(chat_id, "assistant", comment)
 
                 # Store the message ID of the new comment
                 self.role_storage.set_last_message_id(chat_id, sent_message.message_id)

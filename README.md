@@ -75,6 +75,40 @@ uv run main.py
 - Pydantic - 20;840F8O :>=D83C@0F88
 - aiohttp - 0A8=E@>==K5 HTTP 70?@>AK
 
+## Configuration Options / Параметры конфигурации
+
+### Bot-Specific Settings
+
+You can enable/disable features for each bot individually using comma-separated values:
+
+#### Enable Chat History (`BOT_ENABLE_HISTORY`)
+Controls whether the bot remembers previous messages in the conversation.
+- Default: `false` (disabled)
+- Example for 4 bots: `BOT_ENABLE_HISTORY=true,false,true,false`
+  - Bot 1 & 3: Will remember chat history (up to `CHAT_HISTORY_LIMIT` messages)
+  - Bot 2 & 4: No memory, each message is independent
+
+#### Use Reply Mode (`BOT_USE_REPLY`)
+Controls whether the bot uses reply (quotes the message) or just sends a regular message.
+- Default: `false` (uses `answer` - regular message)
+- Example for 4 bots: `BOT_USE_REPLY=false,true,false,true`
+  - Bot 1 & 3: Regular messages (answer)
+  - Bot 2 & 4: Reply with quote (reply)
+
+#### Example .env for 3 bots:
+```env
+BOT_TOKENS=TOKEN1,TOKEN2,TOKEN3
+BOT_NAMES=Motivator,Psychologist,Coach
+BOT_ENABLE_HISTORY=true,true,false
+BOT_USE_REPLY=true,false,true
+CHAT_HISTORY_LIMIT=20
+```
+
+This configuration means:
+- **Motivator**: History enabled, uses reply
+- **Psychologist**: History enabled, uses answer
+- **Coach**: No history, uses reply
+
 ## Deployment / Деплой
 
 ### Deploy with Dokploy
@@ -82,10 +116,14 @@ uv run main.py
 1. Create a new project in Dokploy
 2. Connect your Git repository
 3. Add environment variables in Dokploy settings:
-   - `TELEGRAM_BOT_TOKEN`
+   - `BOT_TOKENS` (comma-separated for multiple bots)
    - `GROQ_API_KEY`
-   - `ADMIN_USER_ID` (optional)
+   - `BOT_NAMES` (optional, comma-separated)
+   - `BOT_ENABLE_HISTORY` (optional, comma-separated true/false)
+   - `BOT_USE_REPLY` (optional, comma-separated true/false)
+   - `ADMIN_USER_IDS` (optional)
    - `PROXY_URL` (optional)
+   - `CHAT_HISTORY_LIMIT` (optional, default: 20)
 4. Dokploy will automatically detect `Dockerfile` and deploy
 
 ### Deploy with Docker Compose
