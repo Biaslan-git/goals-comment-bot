@@ -13,6 +13,7 @@ class BotConfig(BaseModel):
     use_reply: bool = Field(False, description="Use reply instead of answer")
     delete_previous: bool = Field(True, description="Delete previous bot messages before sending new ones")
     channel_id: int | None = Field(None, description="Only reply to messages from this channel ID (optional)")
+    use_markdown: bool = Field(False, description="Use markdown formatting in bot responses")
 
     @property
     def admin_ids_list(self) -> list[int]:
@@ -53,6 +54,9 @@ class MultiBotConfig(BaseSettings):
 
     # Optional: Channel IDs for specific bots (comma-separated channel IDs, matches bot order)
     bot_channel_ids: str = Field("", description="Comma-separated channel IDs for each bot (empty = all messages)")
+
+    # Optional: Use markdown formatting for specific bots (comma-separated true/false, matches bot order)
+    bot_use_markdown: str = Field("", description="Comma-separated true/false for each bot")
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -133,6 +137,18 @@ class MultiBotConfig(BaseSettings):
         if len(channel_ids_list) != len(tokens):
             channel_ids_list = [None] * len(tokens)
 
+        # Parse use_markdown settings (optional)
+        use_markdown_list = []
+        if self.bot_use_markdown:
+            use_markdown_list = [
+                s.strip().lower() == "true"
+                for s in self.bot_use_markdown.split(",")
+                if s.strip()
+            ]
+        # If not provided or count mismatch, use default (False)
+        if len(use_markdown_list) != len(tokens):
+            use_markdown_list = [False] * len(tokens)
+
         # Create BotConfig for each token
         bots = []
         for i, token in enumerate(tokens):
@@ -143,7 +159,8 @@ class MultiBotConfig(BaseSettings):
                 enable_history=enable_history_list[i],
                 use_reply=use_reply_list[i],
                 delete_previous=delete_previous_list[i],
-                channel_id=channel_ids_list[i]
+                channel_id=channel_ids_list[i],
+                use_markdown=use_markdown_list[i]
             ))
 
         return bots
