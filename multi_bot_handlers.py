@@ -197,8 +197,50 @@ class BotHandlers:
             if message.text and message.text.startswith("/"):
                 return
 
-            await message.answer(
-                f"Я {self.bot_config.name} и работаю в групповых чатах! "
-                "Добавь меня в группу, чтобы я комментировал сообщения.\n\n"
-                "Используй /start для списка команд."
+            # Check if user is admin
+            if not self._is_admin(message.from_user.id):
+                await message.answer(
+                    f"Я {self.bot_config.name} и работаю в групповых чатах! "
+                    "Добавь меня в группу, чтобы я комментировал сообщения.\n\n"
+                    "Используй /start для списка команд."
+                )
+                return
+
+            # Admin user - process message with LLM considering bot's role
+            user_message = message.text
+            role = self.role_storage.get_role()
+
+            logger.info(
+                f"[{self.bot_config.name}] Processing private message from admin "
+                f"{message.from_user.username or message.from_user.id}"
             )
+
+            try:
+                # Get chat history for context if enabled
+                chat_id = message.chat.id
+                chat_history = None
+                if self.bot_config.enable_history:
+                    chat_history = self.role_storage.get_chat_history(chat_id)
+
+                # Generate response using LLM with bot's role
+                response = await self.groq_client.generate_comment(role, user_message, chat_history)
+
+                # Send response
+                await message.answer(response)
+
+                # Add to chat history if enabled
+                if self.bot_config.enable_history:
+                    self.role_storage.add_message_to_history(chat_id, "user", user_message)
+                    self.role_storage.add_message_to_history(chat_id, "assistant", response)
+
+                logger.info(
+                    f"[{self.bot_config.name}] Responded to admin in private chat "
+                    f"(user_id={message.from_user.id})"
+                )
+
+            except Exception as e:
+                logger.error(
+                    f"[{self.bot_config.name}] Error generating response for admin: {e}",
+                    exc_info=True
+                )
+                await message.answer("Извини, произошла ошибка при генерации ответа.")
